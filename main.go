@@ -198,8 +198,7 @@ func main() {
 	vertices = append(vertices, L4...)
 	vertices = append(vertices, L3...)
 
-	brick := CreateBrick(0.0, 0.0, objectColor, vertices)
-
+	brick := CreateBrick(0.5, 0.5, objectColor, vertices)
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
 	shaderProgram := linkShaders(shaders)
 
@@ -213,10 +212,10 @@ func main() {
 		// perform rendering
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-		gl.UseProgram(shaderProgram)                           // ensure the right shader program is being used
-		gl.BindVertexArray(brick.vao)                          // bind data
-		gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)/3)) // perform draw call
-		gl.BindVertexArray(0)                                  // unbind data (so we don't mistakenly use/modify it)
+		gl.UseProgram(shaderProgram)                                 // ensure the right shader program is being used
+		gl.BindVertexArray(brick.vao)                                // bind data
+		gl.DrawArrays(gl.TRIANGLES, 0, int32(len(brick.vertices)/3)) // perform draw call
+		gl.BindVertexArray(0)                                        // unbind data (so we don't mistakenly use/modify it)
 		// end of draw loop
 
 		// swap in the rendered buffer
