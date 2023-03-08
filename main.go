@@ -39,10 +39,10 @@ void main()
 }
 `
 	// Vertex definitions
-	L1 = []float32{0.5, 0.5, 0}
-	L2 = []float32{0.5, -0.5, 0}
-	L3 = []float32{-0.5, -0.5, 0}
-	L4 = []float32{-0.5, 0.5, 0}
+	L1 = []float32{0.25, 0.25, 0}
+	L2 = []float32{0.25, -0.25, 0}
+	L3 = []float32{-0.25, -0.25, 0}
+	L4 = []float32{-0.25, 0.25, 0}
 )
 
 type getGlParam func(uint32, uint32, *int32)
@@ -203,9 +203,8 @@ func main() {
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
 	shaderProgram := linkShaders(shaders)
 
-	var VAO, VBO uint32 = brick.vao, brick.vbo
-	transformation := brick.GetTransformation()
 	for !window.ShouldClose() {
+		transformation := brick.GetTransformation()
 		var objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
 		var objectTransformationLocation = gl.GetUniformLocation(shaderProgram, gl.Str("transform\x00"))
 		gl.Uniform3fv(objectColorLocation, 1, &objectColor[0])
@@ -215,7 +214,7 @@ func main() {
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 		gl.UseProgram(shaderProgram)                           // ensure the right shader program is being used
-		gl.BindVertexArray(VAO)                                // bind data
+		gl.BindVertexArray(brick.vao)                          // bind data
 		gl.DrawArrays(gl.TRIANGLES, 0, int32(len(vertices)/3)) // perform draw call
 		gl.BindVertexArray(0)                                  // unbind data (so we don't mistakenly use/modify it)
 		// end of draw loop
@@ -225,8 +224,7 @@ func main() {
 		glfw.PollEvents()
 		time.Sleep(16 * time.Millisecond)
 	}
-	gl.DeleteVertexArrays(1, &VAO)
-	gl.DeleteBuffers(1, &VBO)
+	CleanUpBrick(brick)
 }
 
 func onChar(w *glfw.Window, char rune) {

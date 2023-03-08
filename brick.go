@@ -1,6 +1,9 @@
 package main
 
-import "github.com/engoengine/glm"
+import (
+	"github.com/engoengine/glm"
+	"github.com/go-gl/gl/v2.1/gl"
+)
 
 type Brick struct {
 	xPos     float32
@@ -19,4 +22,10 @@ func CreateBrick(xPos float32, yPos float32, color glm.Vec3, vertices []float32)
 	vao, vbo := CreateVAO(vertices)
 	brick := &Brick{xPos: xPos, yPos: yPos, color: color, vertices: [12]float32(vertices), vao: vao, vbo: vbo}
 	return brick
+}
+
+func CleanUpBrick(brick *Brick) {
+	VAO, VBO := brick.vao, brick.vbo
+	gl.DeleteVertexArrays(1, &VAO)
+	gl.DeleteBuffers(1, &VBO)
 }
