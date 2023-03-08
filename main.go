@@ -18,9 +18,12 @@ var (
 	vertexShaderSource     = `
 #version 410 core
 layout (location = 0) in vec3 position;
+
+uniform mat4 transform;
+
 void main()
 {
-    gl_Position = vec4(position.x, position.y, position.z, 1.0);
+    gl_Position = transform * vec4(position.x, position.y, position.z, 1.0);
 }
 `
 	fragmentShaderSource = `
@@ -107,7 +110,7 @@ func linkShaders(shaders []uint32) uint32 {
 	return program
 }
 
-func createVAO(vertices []float32) (VAO uint32, VBO uint32) {
+func CreateVAO(vertices []float32) (VAO uint32, VBO uint32) {
 
 	gl.GenVertexArrays(1, &VAO)
 	gl.GenBuffers(1, &VBO)
@@ -195,15 +198,18 @@ func main() {
 	vertices = append(vertices, L4...)
 	vertices = append(vertices, L3...)
 
+	brick := CreateBrick(0.0, 0.0, objectColor, vertices)
+
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
 	shaderProgram := linkShaders(shaders)
 
-	var VAO, VBO uint32 = createVAO(vertices)
-
+	var VAO, VBO uint32 = brick.vao, brick.vbo
+	transformation := brick.GetTransformation()
 	for !window.ShouldClose() {
-		var objectColorLocation int32
-		objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
+		var objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
+		var objectTransformationLocation = gl.GetUniformLocation(shaderProgram, gl.Str("transform\x00"))
 		gl.Uniform3fv(objectColorLocation, 1, &objectColor[0])
+		gl.UniformMatrix4fv(objectTransformationLocation, 1, false, &transformation[0])
 
 		// perform rendering
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
