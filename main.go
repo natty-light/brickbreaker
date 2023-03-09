@@ -210,8 +210,16 @@ func main() {
 	reshape(window, width, height)
 	// Prepare Game Objects
 	bricks = prepareBricks()
-	paddle = prepareSingleGameEntity(paddleVertexPosPos, paddleVertexPosNeg, paddleVertexNegPos, paddleVertexNegNeg, paddleInitialX, paddleInitialY, [2]float32{.015, 0})
-	ball = prepareSingleGameEntity(ballVertexPosPos, ballVertexPosNeg, ballVertexNegPos, ballVertexNegNeg, ballInitialX, ballInitialY, ballInitialVelocity)
+	paddle = prepareSingleGameEntity(
+		paddleVertexPosPos, paddleVertexPosNeg,
+		paddleVertexNegPos, paddleVertexNegNeg,
+		paddleInitialX, paddleInitialY,
+		[2]float32{.015, 0}, Paddle)
+	ball = prepareSingleGameEntity(
+		ballVertexPosPos, ballVertexPosNeg,
+		ballVertexNegPos, ballVertexNegNeg,
+		ballInitialX, ballInitialY,
+		ballInitialVelocity, Ball)
 
 	var entities []*GameEntity = []*GameEntity{}
 	entities = append(entities, bricks...)
@@ -284,14 +292,22 @@ func prepareBricks() []*GameEntity {
 	for j := 0; j < 4; j++ {
 		for i := 0; i < 7; i++ {
 			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
-			var brick *GameEntity = CreateGameEntity(x, y, brickColor, brickVertices, [2]float32{0.0, 0.0})
+			var brick *GameEntity = CreateGameEntity(x, y, brickColor, brickVertices, [2]float32{0.0, 0.0}, Brick)
 			bricks = append(bricks, brick)
 		}
 	}
 	return bricks
 }
 
-func prepareSingleGameEntity(PosPosVertex []float32, PosNegVertex []float32, NegPosVertex []float32, NegNegVertex []float32, x float32, y float32, velocity [2]float32) *GameEntity {
+func prepareSingleGameEntity(
+	PosPosVertex []float32,
+	PosNegVertex []float32,
+	NegPosVertex []float32,
+	NegNegVertex []float32,
+	x float32, y float32,
+	velocity [2]float32,
+	whoami EntityType,
+) *GameEntity {
 	var entityVertices []float32 = []float32{}
 	entityVertices = append(entityVertices, PosPosVertex...)
 	entityVertices = append(entityVertices, PosNegVertex...)
@@ -300,7 +316,7 @@ func prepareSingleGameEntity(PosPosVertex []float32, PosNegVertex []float32, Neg
 	entityVertices = append(entityVertices, NegPosVertex...)
 	entityVertices = append(entityVertices, NegNegVertex...)
 
-	entity := CreateGameEntity(x, y, paddleColor, entityVertices, velocity)
+	entity := CreateGameEntity(x, y, paddleColor, entityVertices, velocity, Brick)
 
 	return entity
 }

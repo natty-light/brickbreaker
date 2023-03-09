@@ -19,19 +19,28 @@ type GameEntity struct {
 type EntityFlags struct {
 	xVelScalar float32
 	yVelScalar float32
+	whoami     EntityType
 }
+
+type EntityType int
+
+const (
+	Paddle EntityType = 0
+	Ball   EntityType = 1
+	Brick  EntityType = 2
+)
 
 func (entity *GameEntity) GetTransformation() glm.Mat4 {
 	return glm.Translate3D(entity.xPos, entity.yPos, 0.0)
 }
 
-func CreateGameEntity(xPos float32, yPos float32, color glm.Vec3, vertices []float32, velocity [2]float32) *GameEntity {
+func CreateGameEntity(xPos float32, yPos float32, color glm.Vec3, vertices []float32, velocity [2]float32, whoami EntityType) *GameEntity {
 	// Create openGL VAO and VBO, function found in main.go
 	vao, vbo := CreateVAO(vertices)
 	// Create entity
 	entity := &GameEntity{xPos: xPos, yPos: yPos, color: color, vertices: [18]float32(vertices), vao: vao, vbo: vbo, velocity: velocity}
 	// Create entities movement directives struct
-	entity.flags = EntityFlags{0, 0}
+	entity.flags = EntityFlags{0, 0, whoami}
 	return entity
 }
 
