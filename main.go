@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"runtime"
-	"time"
 	"unsafe"
 
 	"github.com/engoengine/glm"
@@ -13,12 +12,16 @@ import (
 
 var (
 	// global rotation
-	width, height                  int     = 800, 800
+	width, height                  int = 800, 800
+	bricks                         []*GameEntity
 	brickWidth, brickHeight        float32 = .2, .1
+	paddle                         *GameEntity
 	paddleWidth, paddleHeight      float32 = .3, .05
 	paddleInitialX, paddleInitialY float32 = 0, -.75
+	ball                           *GameEntity
 	ballInitialX, ballInitialY     float32 = 0, -.55
 	ballWidth, ballHeight          float32 = .025, .025
+	ballInitialVelocity                    = [2]float32{0, 0}
 	brickColor                             = glm.Vec3{1.0, 1.0, 1.0}
 	paddleColor                            = glm.Vec3{1.0, 1.0, 1.0}
 	vertexShaderSource                     = `
@@ -206,9 +209,9 @@ func main() {
 
 	reshape(window, width, height)
 	// Prepare Game Objects
-	bricks := prepareBricks()
-	paddle := prepareSingleGameEntity(paddleVertexPosPos, paddleVertexPosNeg, paddleVertexNegPos, paddleVertexNegNeg, paddleInitialX, paddleInitialY)
-	ball := prepareSingleGameEntity(ballVertexPosPos, ballVertexPosNeg, ballVertexNegPos, ballVertexNegNeg, ballInitialX, ballInitialY)
+	bricks = prepareBricks()
+	paddle = prepareSingleGameEntity(paddleVertexPosPos, paddleVertexPosNeg, paddleVertexNegPos, paddleVertexNegNeg, paddleInitialX, paddleInitialY, [2]float32{.015, 0})
+	ball = prepareSingleGameEntity(ballVertexPosPos, ballVertexPosNeg, ballVertexNegPos, ballVertexNegNeg, ballInitialX, ballInitialY, ballInitialVelocity)
 
 	var entities []*GameEntity = []*GameEntity{}
 	entities = append(entities, bricks...)
@@ -223,6 +226,7 @@ func main() {
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 		for _, entity := range entities {
+			entity.UpdatePosition(width, height)
 			transformation := entity.GetTransformation()
 			var objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
 			var objectTransformationLocation = gl.GetUniformLocation(shaderProgram, gl.Str("transform\x00"))
@@ -240,7 +244,6 @@ func main() {
 		// swap in the rendered buffer
 		window.SwapBuffers()
 		glfw.PollEvents()
-		time.Sleep(16 * time.Millisecond)
 	}
 	for _, entity := range entities {
 		CleanUpEntity(entity)
@@ -257,6 +260,14 @@ func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods 
 	case key == glfw.KeyEscape && action == glfw.Press,
 		key == glfw.KeyQ && action == glfw.Press:
 		w.SetShouldClose(true)
+	case (key == glfw.KeyLeft) && (action == glfw.Press):
+		paddle.flags.xVelScalar += -1.0
+	case (key == glfw.KeyRight) && (action == glfw.Press):
+		paddle.flags.xVelScalar += 1.0
+	case (key == glfw.KeyRight) && action == glfw.Release:
+		paddle.flags.xVelScalar -= 1.0
+	case (key == glfw.KeyLeft) && action == glfw.Release:
+		paddle.flags.xVelScalar -= -1.0
 	}
 }
 
@@ -273,14 +284,14 @@ func prepareBricks() []*GameEntity {
 	for j := 0; j < 4; j++ {
 		for i := 0; i < 7; i++ {
 			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
-			var brick *GameEntity = CreateGameEntity(x, y, brickColor, brickVertices)
+			var brick *GameEntity = CreateGameEntity(x, y, brickColor, brickVertices, [2]float32{0.0, 0.0})
 			bricks = append(bricks, brick)
 		}
 	}
 	return bricks
 }
 
-func prepareSingleGameEntity(PosPosVertex []float32, PosNegVertex []float32, NegPosVertex []float32, NegNegVertex []float32, x float32, y float32) *GameEntity {
+func prepareSingleGameEntity(PosPosVertex []float32, PosNegVertex []float32, NegPosVertex []float32, NegNegVertex []float32, x float32, y float32, velocity [2]float32) *GameEntity {
 	var entityVertices []float32 = []float32{}
 	entityVertices = append(entityVertices, PosPosVertex...)
 	entityVertices = append(entityVertices, PosNegVertex...)
@@ -289,7 +300,7 @@ func prepareSingleGameEntity(PosPosVertex []float32, PosNegVertex []float32, Neg
 	entityVertices = append(entityVertices, NegPosVertex...)
 	entityVertices = append(entityVertices, NegNegVertex...)
 
-	entity := CreateGameEntity(x, y, paddleColor, entityVertices)
+	entity := CreateGameEntity(x, y, paddleColor, entityVertices, velocity)
 
 	return entity
 }
