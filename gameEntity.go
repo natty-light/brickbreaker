@@ -18,7 +18,7 @@ func (entity *GameEntity) GetTransformation() glm.Mat4 {
 	return glm.Translate3D(entity.xPos, entity.yPos, 0.0)
 }
 
-func CreateBrick(xPos float32, yPos float32, color glm.Vec3, vertices []float32) *GameEntity {
+func CreateGameEntity(xPos float32, yPos float32, color glm.Vec3, vertices []float32) *GameEntity {
 	vao, vbo := CreateVAO(vertices)
 	entity := &GameEntity{xPos: xPos, yPos: yPos, color: color, vertices: [18]float32(vertices), vao: vao, vbo: vbo}
 	return entity
@@ -28,4 +28,9 @@ func CleanUpEntity(entity *GameEntity) {
 	VAO, VBO := entity.vao, entity.vbo
 	gl.DeleteVertexArrays(1, &VAO)
 	gl.DeleteBuffers(1, &VBO)
+}
+
+func (entity *GameEntity) UpdatePosition(velocity [2]float32) {
+	entity.xPos = velocity[0] * entity.xPos
+	entity.yPos = velocity[1] * entity.yPos
 }

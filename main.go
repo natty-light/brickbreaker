@@ -13,10 +13,15 @@ import (
 
 var (
 	// global rotation
-	width, height           int     = 800, 800
-	brickWidth, brickHeight float32 = .2, .1
-	objectColor                     = glm.Vec3{1.0, 1.0, 1.0}
-	vertexShaderSource              = `
+	width, height                  int     = 800, 800
+	brickWidth, brickHeight        float32 = .2, .1
+	paddleWidth, paddleHeight      float32 = .3, .05
+	paddleInitialX, paddleInitialY float32 = 0, -.75
+	ballInitialX, ballInitialY     float32 = 0, -.55
+	ballWidth, ballHeight          float32 = .025, .025
+	brickColor                             = glm.Vec3{1.0, 1.0, 1.0}
+	paddleColor                            = glm.Vec3{1.0, 1.0, 1.0}
+	vertexShaderSource                     = `
 #version 410 core
 layout (location = 0) in vec3 position;
 
@@ -44,6 +49,16 @@ void main()
 	brickVertexPosNeg = []float32{brickWidth / 2.0, -brickHeight / 2.0, 0}
 	brickVertexNegNeg = []float32{-brickWidth / 2.0, -brickHeight / 2.0, 0}
 	brickVertexNegPos = []float32{-brickWidth / 2.0, brickHeight / 2.0, 0}
+
+	paddleVertexPosPos = []float32{paddleWidth / 2.0, paddleHeight / 2.0, 0}
+	paddleVertexPosNeg = []float32{paddleWidth / 2.0, -paddleHeight / 2.0, 0}
+	paddleVertexNegNeg = []float32{-paddleWidth / 2.0, -paddleHeight / 2.0, 0}
+	paddleVertexNegPos = []float32{-paddleWidth / 2.0, paddleHeight / 2.0, 0}
+
+	ballVertexPosPos = []float32{ballWidth / 2.0, ballHeight / 2.0, 0}
+	ballVertexPosNeg = []float32{ballWidth / 2.0, -ballHeight / 2.0, 0}
+	ballVertexNegNeg = []float32{-ballWidth / 2.0, -ballHeight / 2.0, 0}
+	ballVertexNegPos = []float32{-ballWidth / 2.0, ballHeight / 2.0, 0}
 )
 
 type getGlParam func(uint32, uint32, *int32)
@@ -190,8 +205,15 @@ func main() {
 	}
 
 	reshape(window, width, height)
-	// Create brick vertex array
+	// Prepare Game Objects
 	bricks := prepareBricks()
+	paddle := prepareSingleGameEntity(paddleVertexPosPos, paddleVertexPosNeg, paddleVertexNegPos, paddleVertexNegNeg, paddleInitialX, paddleInitialY)
+	ball := prepareSingleGameEntity(ballVertexPosPos, ballVertexPosNeg, ballVertexNegPos, ballVertexNegNeg, ballInitialX, ballInitialY)
+
+	var entities []*GameEntity = []*GameEntity{}
+	entities = append(entities, bricks...)
+	entities = append(entities, paddle)
+	entities = append(entities, ball)
 
 	// Compile shaders
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
@@ -200,18 +222,18 @@ func main() {
 	for !window.ShouldClose() {
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-		for _, b := range bricks {
-			transformation := b.GetTransformation()
+		for _, entity := range entities {
+			transformation := entity.GetTransformation()
 			var objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
 			var objectTransformationLocation = gl.GetUniformLocation(shaderProgram, gl.Str("transform\x00"))
-			gl.Uniform3fv(objectColorLocation, 1, &objectColor[0])
+			gl.Uniform3fv(objectColorLocation, 1, &brickColor[0])
 			gl.UniformMatrix4fv(objectTransformationLocation, 1, false, &transformation[0])
 
 			// perform rendering
-			gl.UseProgram(shaderProgram)                             // ensure the right shader program is being used
-			gl.BindVertexArray(b.vao)                                // bind data
-			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(b.vertices)/3)) // perform draw call
-			gl.BindVertexArray(0)                                    // unbind data (so we don't mistakenly use/modify it)
+			gl.UseProgram(shaderProgram)                                  // ensure the right shader program is being used
+			gl.BindVertexArray(entity.vao)                                // bind data
+			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(entity.vertices)/3)) // perform draw call
+			gl.BindVertexArray(0)                                         // unbind data (so we don't mistakenly use/modify it)
 			// end of draw loop
 		}
 
@@ -220,8 +242,8 @@ func main() {
 		glfw.PollEvents()
 		time.Sleep(16 * time.Millisecond)
 	}
-	for _, brick := range bricks {
-		CleanUpEntity(brick)
+	for _, entity := range entities {
+		CleanUpEntity(entity)
 	}
 }
 
@@ -251,9 +273,23 @@ func prepareBricks() []*GameEntity {
 	for j := 0; j < 4; j++ {
 		for i := 0; i < 7; i++ {
 			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
-			var brick *GameEntity = CreateBrick(x, y, objectColor, brickVertices)
+			var brick *GameEntity = CreateGameEntity(x, y, brickColor, brickVertices)
 			bricks = append(bricks, brick)
 		}
 	}
 	return bricks
+}
+
+func prepareSingleGameEntity(PosPosVertex []float32, PosNegVertex []float32, NegPosVertex []float32, NegNegVertex []float32, x float32, y float32) *GameEntity {
+	var entityVertices []float32 = []float32{}
+	entityVertices = append(entityVertices, PosPosVertex...)
+	entityVertices = append(entityVertices, PosNegVertex...)
+	entityVertices = append(entityVertices, NegNegVertex...)
+	entityVertices = append(entityVertices, PosPosVertex...)
+	entityVertices = append(entityVertices, NegPosVertex...)
+	entityVertices = append(entityVertices, NegNegVertex...)
+
+	entity := CreateGameEntity(x, y, paddleColor, entityVertices)
+
+	return entity
 }
