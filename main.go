@@ -13,9 +13,10 @@ import (
 
 var (
 	// global rotation
-	width, height      int = 800, 800
-	objectColor            = glm.Vec3{1.0, 1.0, 1.0}
-	vertexShaderSource     = `
+	width, height           int     = 800, 800
+	brickWidth, brickHeight float32 = .2, .1
+	objectColor                     = glm.Vec3{1.0, 1.0, 1.0}
+	vertexShaderSource              = `
 #version 410 core
 layout (location = 0) in vec3 position;
 
@@ -39,10 +40,10 @@ void main()
 }
 `
 	// Vertex definitions
-	L1 = []float32{0.25, 0.25, 0}
-	L2 = []float32{0.25, -0.25, 0}
-	L3 = []float32{-0.25, -0.25, 0}
-	L4 = []float32{-0.25, 0.25, 0}
+	brickVertexPosPos = []float32{brickWidth / 2.0, brickHeight / 2.0, 0}
+	brickVertexPosNeg = []float32{brickWidth / 2.0, -brickHeight / 2.0, 0}
+	brickVertexNegNeg = []float32{-brickWidth / 2.0, -brickHeight / 2.0, 0}
+	brickVertexNegPos = []float32{-brickWidth / 2.0, brickHeight / 2.0, 0}
 )
 
 type getGlParam func(uint32, uint32, *int32)
@@ -189,19 +190,10 @@ func main() {
 	}
 
 	reshape(window, width, height)
+	// Create brick vertex array
+	bricks := prepareBricks()
 
-	var vertices []float32 = []float32{}
-	vertices = append(vertices, L1...)
-	vertices = append(vertices, L2...)
-	vertices = append(vertices, L3...)
-	vertices = append(vertices, L1...)
-	vertices = append(vertices, L4...)
-	vertices = append(vertices, L3...)
-
-	var brick *Brick = CreateBrick(0.5, 0.5, objectColor, vertices)
-	var otherBrick *Brick = CreateBrick(-0.5, -0.5, objectColor, vertices)
-
-	bricks := []*Brick{brick, otherBrick}
+	// Compile shaders
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
 	shaderProgram := linkShaders(shaders)
 
@@ -228,7 +220,9 @@ func main() {
 		glfw.PollEvents()
 		time.Sleep(16 * time.Millisecond)
 	}
-	CleanUpBrick(brick)
+	for _, brick := range bricks {
+		CleanUpEntity(brick)
+	}
 }
 
 func onChar(w *glfw.Window, char rune) {
@@ -242,4 +236,24 @@ func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods 
 		key == glfw.KeyQ && action == glfw.Press:
 		w.SetShouldClose(true)
 	}
+}
+
+func prepareBricks() []*GameEntity {
+	var brickVertices []float32 = []float32{}
+	brickVertices = append(brickVertices, brickVertexPosPos...)
+	brickVertices = append(brickVertices, brickVertexPosNeg...)
+	brickVertices = append(brickVertices, brickVertexNegNeg...)
+	brickVertices = append(brickVertices, brickVertexPosPos...)
+	brickVertices = append(brickVertices, brickVertexNegPos...)
+	brickVertices = append(brickVertices, brickVertexNegNeg...)
+
+	bricks := []*GameEntity{}
+	for j := 0; j < 4; j++ {
+		for i := 0; i < 7; i++ {
+			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
+			var brick *GameEntity = CreateBrick(x, y, objectColor, brickVertices)
+			bricks = append(bricks, brick)
+		}
+	}
+	return bricks
 }
