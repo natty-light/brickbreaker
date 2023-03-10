@@ -12,19 +12,19 @@ import (
 
 var (
 	// global rotation
-	width, height                  int = 800, 800
-	bricks                         []*GameEntity
-	brickWidth, brickHeight        float32 = .2, .1
-	paddle                         *GameEntity
-	paddleWidth, paddleHeight      float32 = .3, .05
-	paddleInitialX, paddleInitialY float32 = 0, -.75
-	ball                           *GameEntity
-	ballInitialX, ballInitialY     float32 = 0, -.55
-	ballWidth, ballHeight          float32 = .025, .025
-	ballInitialVelocity                    = [2]float32{0, 0}
-	brickColor                             = glm.Vec3{1.0, 1.0, 1.0}
-	paddleColor                            = glm.Vec3{1.0, 1.0, 1.0}
-	vertexShaderSource                     = `
+	width, height         int = 800, 800
+	bricks                []*GameEntity
+	brickDimensions       = [2]float32{.2, .1}
+	paddle                *GameEntity
+	paddleDimensions      = [2]float32{.3, .05}
+	paddleInitialPosition = [2]float32{0, -.75}
+	ball                  *GameEntity
+	ballInitialPosition   = [2]float32{0, -.55}
+	ballDimensions        = [2]float32{.025, .025}
+	ballInitialVelocity   = [2]float32{0, 0}
+	brickColor            = glm.Vec3{1.0, 1.0, 1.0}
+	paddleColor           = glm.Vec3{1.0, 1.0, 1.0}
+	vertexShaderSource    = `
 #version 410 core
 layout (location = 0) in vec3 position;
 
@@ -48,20 +48,20 @@ void main()
 }
 `
 	// Vertex definitions
-	brickVertexPosPos = []float32{brickWidth / 2.0, brickHeight / 2.0, 0}
-	brickVertexPosNeg = []float32{brickWidth / 2.0, -brickHeight / 2.0, 0}
-	brickVertexNegNeg = []float32{-brickWidth / 2.0, -brickHeight / 2.0, 0}
-	brickVertexNegPos = []float32{-brickWidth / 2.0, brickHeight / 2.0, 0}
+	brickVertexPosPos = []float32{brickDimensions[0] / 2.0, brickDimensions[1] / 2.0, 0}
+	brickVertexPosNeg = []float32{brickDimensions[0] / 2.0, -brickDimensions[1] / 2.0, 0}
+	brickVertexNegNeg = []float32{-brickDimensions[0] / 2.0, -brickDimensions[1] / 2.0, 0}
+	brickVertexNegPos = []float32{-brickDimensions[0] / 2.0, brickDimensions[1] / 2.0, 0}
 
-	paddleVertexPosPos = []float32{paddleWidth / 2.0, paddleHeight / 2.0, 0}
-	paddleVertexPosNeg = []float32{paddleWidth / 2.0, -paddleHeight / 2.0, 0}
-	paddleVertexNegNeg = []float32{-paddleWidth / 2.0, -paddleHeight / 2.0, 0}
-	paddleVertexNegPos = []float32{-paddleWidth / 2.0, paddleHeight / 2.0, 0}
+	paddleVertexPosPos = []float32{paddleDimensions[0] / 2.0, paddleDimensions[1] / 2.0, 0}
+	paddleVertexPosNeg = []float32{paddleDimensions[0] / 2.0, -paddleDimensions[1] / 2.0, 0}
+	paddleVertexNegNeg = []float32{-paddleDimensions[0] / 2.0, -paddleDimensions[1] / 2.0, 0}
+	paddleVertexNegPos = []float32{-paddleDimensions[0] / 2.0, paddleDimensions[1] / 2.0, 0}
 
-	ballVertexPosPos = []float32{ballWidth / 2.0, ballHeight / 2.0, 0}
-	ballVertexPosNeg = []float32{ballWidth / 2.0, -ballHeight / 2.0, 0}
-	ballVertexNegNeg = []float32{-ballWidth / 2.0, -ballHeight / 2.0, 0}
-	ballVertexNegPos = []float32{-ballWidth / 2.0, ballHeight / 2.0, 0}
+	ballVertexPosPos = []float32{ballDimensions[0] / 2.0, ballDimensions[1] / 2.0, 0}
+	ballVertexPosNeg = []float32{ballDimensions[0] / 2.0, -ballDimensions[1] / 2.0, 0}
+	ballVertexNegNeg = []float32{-ballDimensions[0] / 2.0, -ballDimensions[1] / 2.0, 0}
+	ballVertexNegPos = []float32{-ballDimensions[0] / 2.0, ballDimensions[1] / 2.0, 0}
 )
 
 type getGlParam func(uint32, uint32, *int32)
@@ -213,18 +213,17 @@ func main() {
 	paddle = prepareSingleGameEntity(
 		paddleVertexPosPos, paddleVertexPosNeg,
 		paddleVertexNegPos, paddleVertexNegNeg,
-		paddleInitialX, paddleInitialY,
-		[2]float32{.015, 0}, Paddle)
+		paddleInitialPosition,
+		[2]float32{.015, 0},
+		paddleDimensions,
+		Paddle)
 	ball = prepareSingleGameEntity(
 		ballVertexPosPos, ballVertexPosNeg,
 		ballVertexNegPos, ballVertexNegNeg,
-		ballInitialX, ballInitialY,
-		ballInitialVelocity, Ball)
-
-	var entities []*GameEntity = []*GameEntity{}
-	entities = append(entities, bricks...)
-	entities = append(entities, paddle)
-	entities = append(entities, ball)
+		ballInitialPosition,
+		ballInitialVelocity,
+		ballDimensions,
+		Ball)
 
 	// Compile shaders
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
@@ -233,29 +232,25 @@ func main() {
 	for !window.ShouldClose() {
 		gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-		for _, entity := range entities {
-			entity.UpdatePosition(width, height)
-			transformation := entity.GetTransformation()
-			var objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
-			var objectTransformationLocation = gl.GetUniformLocation(shaderProgram, gl.Str("transform\x00"))
-			gl.Uniform3fv(objectColorLocation, 1, &brickColor[0])
-			gl.UniformMatrix4fv(objectTransformationLocation, 1, false, &transformation[0])
 
-			// perform rendering
-			gl.UseProgram(shaderProgram)                                  // ensure the right shader program is being used
-			gl.BindVertexArray(entity.vao)                                // bind data
-			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(entity.vertices)/3)) // perform draw call
-			gl.BindVertexArray(0)                                         // unbind data (so we don't mistakenly use/modify it)
-			// end of draw loop
+		// Call draw function on game entities
+		for _, brick := range bricks {
+			drawEntity(brick, shaderProgram)
+
 		}
-
+		drawEntity(paddle, shaderProgram)
+		drawEntity(ball, shaderProgram)
+		// end of draw loop
 		// swap in the rendered buffer
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}
-	for _, entity := range entities {
-		CleanUpEntity(entity)
+	// Clean Up
+	for _, brick := range bricks {
+		CleanUpEntity(brick)
 	}
+	CleanUpEntity(paddle)
+	CleanUpEntity(ball)
 }
 
 func onChar(w *glfw.Window, char rune) {
@@ -292,31 +287,9 @@ func prepareBricks() []*GameEntity {
 	for j := 0; j < 4; j++ {
 		for i := 0; i < 7; i++ {
 			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
-			var brick *GameEntity = CreateGameEntity(x, y, brickColor, brickVertices, [2]float32{0.0, 0.0}, Brick)
+			var brick *GameEntity = CreateGameEntity([2]float32{x, y}, brickDimensions, brickColor, brickVertices, [2]float32{0.0, 0.0}, Brick)
 			bricks = append(bricks, brick)
 		}
 	}
 	return bricks
-}
-
-func prepareSingleGameEntity(
-	PosPosVertex []float32,
-	PosNegVertex []float32,
-	NegPosVertex []float32,
-	NegNegVertex []float32,
-	x float32, y float32,
-	velocity [2]float32,
-	whoami EntityType,
-) *GameEntity {
-	var entityVertices []float32 = []float32{}
-	entityVertices = append(entityVertices, PosPosVertex...)
-	entityVertices = append(entityVertices, PosNegVertex...)
-	entityVertices = append(entityVertices, NegNegVertex...)
-	entityVertices = append(entityVertices, PosPosVertex...)
-	entityVertices = append(entityVertices, NegPosVertex...)
-	entityVertices = append(entityVertices, NegNegVertex...)
-
-	entity := CreateGameEntity(x, y, paddleColor, entityVertices, velocity, Brick)
-
-	return entity
 }
