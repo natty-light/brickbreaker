@@ -7,7 +7,7 @@ import (
 
 type GameEntity struct {
 	position   [2]float32
-	vertices   [18]float32
+	vertices   []float32
 	color      glm.Vec3
 	vao        uint32
 	vbo        uint32
@@ -34,7 +34,7 @@ func CreateGameEntity(position [2]float32, dimensions [2]float32, color glm.Vec3
 	// Create openGL VAO and VBO, function found in main.go
 	vao, vbo := CreateVAO(vertices)
 	// Create entity
-	entity := &GameEntity{position: position, dimensions: dimensions, color: color, vertices: [18]float32(vertices), vao: vao, vbo: vbo, velocity: velocity}
+	entity := &GameEntity{position: position, dimensions: dimensions, color: color, vertices: vertices, vao: vao, vbo: vbo, velocity: velocity}
 	// Create entities movement directives struct
 	entity.flags = EntityFlags{0, 0, whoami}
 	return entity
