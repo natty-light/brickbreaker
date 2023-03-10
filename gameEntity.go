@@ -81,7 +81,7 @@ func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity) {
 	staticRightEdge, staticLeftEdge := staticEntity.position[0]+staticEntity.dimensions[0]/2.0, staticEntity.position[0]-staticEntity.dimensions[0]/2.0
 
 	containedX := (nextDynamicRightEdge >= staticLeftEdge && nextDynamicRightEdge <= staticRightEdge) || (nextDynamicLeftEdge >= staticLeftEdge && nextDynamicLeftEdge <= staticRightEdge)
-	containedY := (nextDynamicTopEdge <= staticTopEdge && nextDynamicBottomEdge <= staticBottomEdge) || (nextDynamicBottomEdge >= staticBottomEdge && nextDynamicTopEdge <= staticBottomEdge)
+	containedY := (nextDynamicTopEdge >= staticBottomEdge && nextDynamicTopEdge <= staticTopEdge) || (nextDynamicBottomEdge >= staticBottomEdge && nextDynamicBottomEdge <= staticTopEdge)
 
 	if containedX && containedY {
 		// Check collision from below -> reflect y velocity
