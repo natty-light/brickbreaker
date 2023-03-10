@@ -238,9 +238,10 @@ func main() {
 
 		// Call draw function on game entities
 		for _, brick := range bricks {
-			drawEntity(brick, shaderProgram)
-			checkEntityCollision(brick, ball, removeBrickAndUpdateScore)
-
+			if brick.flags.enabled {
+				drawEntity(brick, shaderProgram)
+				checkEntityCollision(brick, ball, brickCollisionCallback)
+			}
 		}
 		checkEntityCollision(paddle, ball, func(ge *GameEntity) {})
 		paddle.UpdatePosition(width, height)
@@ -294,13 +295,13 @@ func prepareBricks() []*GameEntity {
 	for j := 0; j < 4; j++ {
 		for i := 0; i < 7; i++ {
 			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
-			var brick *GameEntity = CreateGameEntity([2]float32{x, y}, brickDimensions, brickColor, brickVertices, [2]float32{0.0, 0.0}, 2)
+			var brick *GameEntity = CreateGameEntity([2]float32{x, y}, brickDimensions, brickColor, brickVertices, [2]float32{0.0, 0.0}, 2, true)
 			bricks = append(bricks, brick)
 		}
 	}
 	return bricks
 }
 
-func removeBrickAndUpdateScore(entity *GameEntity) {
-	fmt.Println("Do something here")
+func brickCollisionCallback(entity *GameEntity) {
+	entity.flags.enabled = false
 }

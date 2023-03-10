@@ -22,6 +22,7 @@ type EntityFlags struct {
 	xVelScalar float32
 	yVelScalar float32
 	whoami     int
+	enabled    bool
 }
 
 // Getter function to return the glm.Mat4 translation matrix given the entities position
@@ -30,13 +31,13 @@ func (entity *GameEntity) GetTransformation() glm.Mat4 {
 }
 
 // Helper function for creating the GameEntity pointer as well as the VAO and VBO for OpenGL
-func CreateGameEntity(position [2]float32, dimensions [2]float32, color glm.Vec3, vertices []float32, velocity [2]float32, whoami int) *GameEntity {
+func CreateGameEntity(position [2]float32, dimensions [2]float32, color glm.Vec3, vertices []float32, velocity [2]float32, whoami int, enabled bool) *GameEntity {
 	// Create openGL VAO and VBO, function found in main.go
 	vao, vbo := CreateVAO(vertices)
 	// Create entity
 	entity := &GameEntity{position: position, dimensions: dimensions, color: color, vertices: vertices, vao: vao, vbo: vbo, velocity: velocity}
 	// Create entities movement directives struct
-	entity.flags = EntityFlags{0, 0, whoami}
+	entity.flags = EntityFlags{0, 0, whoami, enabled}
 	return entity
 }
 
@@ -120,7 +121,7 @@ func prepareSingleGameEntity(
 	entityVertices = append(entityVertices, NegPosVertex...)
 	entityVertices = append(entityVertices, NegNegVertex...)
 
-	entity := CreateGameEntity(position, dimensions, paddleColor, entityVertices, velocity, whoami)
+	entity := CreateGameEntity(position, dimensions, paddleColor, entityVertices, velocity, whoami, true)
 
 	return entity
 }
