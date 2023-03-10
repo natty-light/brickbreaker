@@ -63,6 +63,41 @@ func (entity *GameEntity) UpdatePosition(maxX, maxY int) {
 	}
 }
 
+// TODO: Have this function check which side of the static entity the dyanmic
+// entity overlaps with, then adjust the collision accordingly
+// The static refers to the entity which we consider immovable for the purpose of
+// the collision, even if it is capabale of moving
+// For example, in a paddle-ball collision, consider the paddle static
+func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity) {
+	nextX := dynamicEntity.position[0] + dynamicEntity.flags.xVelScalar*dynamicEntity.velocity[0]
+	nextY := dynamicEntity.position[1] + dynamicEntity.flags.yVelScalar*dynamicEntity.velocity[1]
+
+	// Extract location of edges out of structs into variables so it is easier to work with
+	currentDynamicTopEdge, currentDynamicBottomEdge := dynamicEntity.position[1]+dynamicEntity.dimensions[1]/2.0, dynamicEntity.position[1]-dynamicEntity.dimensions[1]/2.0
+	currentDynamicRightEdge, currentDynamicLeftEdge := dynamicEntity.position[0]+dynamicEntity.dimensions[0]/2.0, dynamicEntity.position[0]-dynamicEntity.dimensions[0]/2.0
+	nextDynamicTopEdge, nextDynamicBottomEdge := nextY+dynamicEntity.dimensions[1]/2.0, nextY-dynamicEntity.dimensions[1]/2.0
+	nextDynamicRightEdge, nextDynamicLeftEdge := nextX+dynamicEntity.dimensions[0]/2.0, nextX-dynamicEntity.dimensions[0]/2.0
+	staticTopEdge, staticBottomEdge := staticEntity.position[1]+staticEntity.dimensions[1]/2.0, staticEntity.position[1]-staticEntity.dimensions[1]/2.0
+	staticRightEdge, staticLeftEdge := staticEntity.position[0]+staticEntity.dimensions[0]/2.0, staticEntity.position[0]-staticEntity.dimensions[0]/2.0
+
+	containedX := (nextDynamicRightEdge >= staticLeftEdge && nextDynamicRightEdge <= staticRightEdge) || (nextDynamicLeftEdge >= staticLeftEdge && nextDynamicLeftEdge <= staticRightEdge)
+	containedY := (nextDynamicTopEdge <= staticTopEdge && nextDynamicBottomEdge <= staticBottomEdge) || (nextDynamicBottomEdge >= staticBottomEdge && nextDynamicTopEdge <= staticBottomEdge)
+
+	if containedX && containedY {
+		// Check collision from below -> reflect y velocity
+		// Check collision from above -> reflect y velocity
+		if currentDynamicBottomEdge > staticTopEdge || currentDynamicTopEdge < staticBottomEdge {
+			dynamicEntity.flags.yVelScalar *= -1
+		}
+		// Check collision from right -> reflect x
+		// Check collision from left -> reflect x velocity
+		if currentDynamicRightEdge < currentDynamicLeftEdge || currentDynamicLeftEdge > currentDynamicRightEdge {
+			dynamicEntity.flags.xVelScalar *= -1
+		}
+	}
+
+}
+
 // Takes a set of four vertices describing the shape of a tetrahedral game object,
 // as well as the objects position, velocity, and shape, and returns a
 // GameEntity pointer for that object
@@ -103,15 +138,6 @@ func drawEntity(entity *GameEntity, shaderProgram uint32) {
 	// perform rendering
 	gl.UseProgram(shaderProgram)                                  // ensure the right shader program is being used
 	gl.BindVertexArray(entity.vao)                                // bind data
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(entity.vertices)/3)) // perform draw call
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(entity.vertices)/3)) // perform draw call, telling gl that the step is 3
 	gl.BindVertexArray(0)                                         // unbind data (so we don't mistakenly use/modify it)
-}
-
-// TODO: Have this function check which side of the static entity the dyanmic
-// entity overlaps with, then adjust the collision accordingly
-// The static refers to the entity which we consider immovable for the purpose of
-// the collision, even if it is capabale of moving
-// For example, in a paddle-ball collision, consider the paddle static
-func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity) {
-
 }

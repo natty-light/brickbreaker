@@ -23,7 +23,7 @@ var (
 	ball                  *GameEntity
 	ballInitialPosition   = [2]float32{0, -.55}
 	ballDimensions        = [2]float32{.025, .025}
-	ballInitialVelocity   = [2]float32{.01, .01}
+	ballInitialVelocity   = [2]float32{0, .01}
 	brickColor            = glm.Vec3{1.0, 1.0, 1.0}
 	paddleColor           = glm.Vec3{1.0, 1.0, 1.0}
 	vertexShaderSource    = `
@@ -132,7 +132,6 @@ func linkShaders(shaders []uint32) uint32 {
 }
 
 func CreateVAO(vertices []float32) (VAO uint32, VBO uint32) {
-
 	gl.GenVertexArrays(1, &VAO)
 	gl.GenBuffers(1, &VBO)
 
@@ -238,9 +237,11 @@ func main() {
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		// Call draw function on game entities
-		for _, brick := range bricks {
-			drawEntity(brick, shaderProgram)
-		}
+		// for _, brick := range bricks {
+		// 	drawEntity(brick, shaderProgram)
+		// 	checkEntityCollision(brick, ball)
+		// }
+		checkEntityCollision(paddle, ball)
 		paddle.UpdatePosition(width, height)
 		ball.UpdatePosition(width, height)
 		drawEntity(paddle, shaderProgram)
@@ -268,13 +269,13 @@ func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods 
 	case key == glfw.KeyEscape && action == glfw.Press,
 		key == glfw.KeyQ && action == glfw.Press:
 		w.SetShouldClose(true)
-	case (key == glfw.KeyLeft) && (action == glfw.Press):
+	case key == glfw.KeyLeft && action == glfw.Press:
 		paddle.flags.xVelScalar += -1.0
-	case (key == glfw.KeyRight) && (action == glfw.Press):
+	case key == glfw.KeyRight && action == glfw.Press:
 		paddle.flags.xVelScalar += 1.0
-	case (key == glfw.KeyRight) && action == glfw.Release:
+	case key == glfw.KeyRight && action == glfw.Release:
 		paddle.flags.xVelScalar -= 1.0
-	case (key == glfw.KeyLeft) && action == glfw.Release:
+	case key == glfw.KeyLeft && action == glfw.Release:
 		paddle.flags.xVelScalar -= -1.0
 	}
 }
