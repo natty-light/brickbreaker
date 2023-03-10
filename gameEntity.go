@@ -86,13 +86,13 @@ func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity, c
 	if containedX && containedY {
 		// Check collision from below -> reflect y velocity
 		// Check collision from above -> reflect y velocity
-		if currentDynamicBottomEdge > staticTopEdge || currentDynamicTopEdge < staticBottomEdge {
+		if currentDynamicBottomEdge >= staticTopEdge || currentDynamicTopEdge <= staticBottomEdge {
 			dynamicEntity.flags.yVelScalar *= -1
 			collisionCallBack(staticEntity)
 		}
 		// Check collision from right -> reflect x
 		// Check collision from left -> reflect x velocity
-		if currentDynamicRightEdge < currentDynamicLeftEdge || currentDynamicLeftEdge > currentDynamicRightEdge {
+		if currentDynamicRightEdge <= currentDynamicLeftEdge || currentDynamicLeftEdge >= currentDynamicRightEdge {
 			dynamicEntity.flags.xVelScalar *= -1
 			collisionCallBack(staticEntity)
 		}
