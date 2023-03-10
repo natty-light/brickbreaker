@@ -94,6 +94,9 @@ func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity, c
 		// Check collision from right -> reflect x
 		// Check collision from left -> reflect x velocity
 		if currentDynamicRightEdge <= staticLeftEdge || currentDynamicLeftEdge >= staticRightEdge {
+			// if dynamicEntity.flags.whoami == 1 && staticEntity.flags.whoami == 0 {
+			// 	dynamicEntity.velocity[0] = ((dynamicEntity.position[0] - staticEntity.position[0]) / staticEntity.dimensions[0]) - 0.5
+			// }
 			dynamicEntity.flags.xVelScalar *= -1
 			collisionCallBack(staticEntity)
 		}
