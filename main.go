@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"runtime"
 	"unsafe"
@@ -18,10 +19,11 @@ var (
 	paddle                *GameEntity
 	paddleDimensions      = [2]float32{.3, .05}
 	paddleInitialPosition = [2]float32{0, -.75}
+	paddleVelocity        = [2]float32{.015, 0}
 	ball                  *GameEntity
 	ballInitialPosition   = [2]float32{0, -.55}
 	ballDimensions        = [2]float32{.025, .025}
-	ballInitialVelocity   = [2]float32{0, 0}
+	ballInitialVelocity   = [2]float32{.01, .01}
 	brickColor            = glm.Vec3{1.0, 1.0, 1.0}
 	paddleColor           = glm.Vec3{1.0, 1.0, 1.0}
 	vertexShaderSource    = `
@@ -214,16 +216,18 @@ func main() {
 		paddleVertexPosPos, paddleVertexPosNeg,
 		paddleVertexNegPos, paddleVertexNegNeg,
 		paddleInitialPosition,
-		[2]float32{.015, 0},
+		paddleVelocity,
 		paddleDimensions,
-		Paddle)
+		0)
 	ball = prepareSingleGameEntity(
 		ballVertexPosPos, ballVertexPosNeg,
 		ballVertexNegPos, ballVertexNegNeg,
 		ballInitialPosition,
 		ballInitialVelocity,
 		ballDimensions,
-		Ball)
+		1)
+	ball.flags.xVelScalar, ball.flags.yVelScalar = 1, 1
+	fmt.Print(ball.flags.whoami)
 
 	// Compile shaders
 	shaders := compileShaders(vertexShaderSource, fragmentShaderSource)
@@ -236,8 +240,9 @@ func main() {
 		// Call draw function on game entities
 		for _, brick := range bricks {
 			drawEntity(brick, shaderProgram)
-
 		}
+		paddle.UpdatePosition(width, height)
+		ball.UpdatePosition(width, height)
 		drawEntity(paddle, shaderProgram)
 		drawEntity(ball, shaderProgram)
 		// end of draw loop
@@ -287,7 +292,7 @@ func prepareBricks() []*GameEntity {
 	for j := 0; j < 4; j++ {
 		for i := 0; i < 7; i++ {
 			var x, y float32 = -0.75 + float32(i)*.25, .8 - 0.15*float32(j)
-			var brick *GameEntity = CreateGameEntity([2]float32{x, y}, brickDimensions, brickColor, brickVertices, [2]float32{0.0, 0.0}, Brick)
+			var brick *GameEntity = CreateGameEntity([2]float32{x, y}, brickDimensions, brickColor, brickVertices, [2]float32{0.0, 0.0}, 2)
 			bricks = append(bricks, brick)
 		}
 	}

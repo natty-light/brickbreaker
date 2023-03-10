@@ -16,25 +16,19 @@ type GameEntity struct {
 	dimensions [2]float32
 }
 
+// 0 for paddle, 1 for ball, 2 for brick
+// No enum means this kind of sucks
 type EntityFlags struct {
 	xVelScalar float32
 	yVelScalar float32
-	whoami     EntityType
+	whoami     int
 }
-
-type EntityType int
-
-const (
-	Paddle EntityType = 0
-	Ball   EntityType = 1
-	Brick  EntityType = 2
-)
 
 func (entity *GameEntity) GetTransformation() glm.Mat4 {
 	return glm.Translate3D(entity.position[0], entity.position[1], 0.0)
 }
 
-func CreateGameEntity(position [2]float32, dimensions [2]float32, color glm.Vec3, vertices []float32, velocity [2]float32, whoami EntityType) *GameEntity {
+func CreateGameEntity(position [2]float32, dimensions [2]float32, color glm.Vec3, vertices []float32, velocity [2]float32, whoami int) *GameEntity {
 	// Create openGL VAO and VBO, function found in main.go
 	vao, vbo := CreateVAO(vertices)
 	// Create entity
@@ -52,11 +46,17 @@ func CleanUpEntity(entity *GameEntity) {
 
 func (entity *GameEntity) UpdatePosition(maxX, maxY int) {
 	nextX, nextY := entity.position[0]+entity.flags.xVelScalar*entity.velocity[0], entity.position[1]+entity.flags.yVelScalar*entity.velocity[1]
-	if nextX > (-1.0+entity.dimensions[0]/2.0) && nextX < (1.0-entity.dimensions[0]/2.0) {
+	if nextX >= (-1.0+entity.dimensions[0]/2.0) && nextX <= (1.0-entity.dimensions[0]/2.0) {
 		entity.position[0] = nextX
+	} else if entity.flags.whoami == 1 {
+
+		entity.flags.xVelScalar *= -1.0
 	}
+
 	if nextY > (-1.0+entity.dimensions[1]/2.0) && nextY < (1.0-entity.dimensions[1]/2.0) {
 		entity.position[1] = nextY
+	} else if entity.flags.whoami == 1 {
+		entity.flags.yVelScalar *= -1.0
 	}
 }
 
@@ -68,7 +68,7 @@ func prepareSingleGameEntity(
 	position [2]float32,
 	velocity [2]float32,
 	dimensions [2]float32,
-	whoami EntityType,
+	whoami int,
 ) *GameEntity {
 	var entityVertices []float32 = []float32{}
 	entityVertices = append(entityVertices, PosPosVertex...)
@@ -78,13 +78,12 @@ func prepareSingleGameEntity(
 	entityVertices = append(entityVertices, NegPosVertex...)
 	entityVertices = append(entityVertices, NegNegVertex...)
 
-	entity := CreateGameEntity(position, dimensions, paddleColor, entityVertices, velocity, Brick)
+	entity := CreateGameEntity(position, dimensions, paddleColor, entityVertices, velocity, whoami)
 
 	return entity
 }
 
 func drawEntity(entity *GameEntity, shaderProgram uint32) {
-	entity.UpdatePosition(width, height)
 	transformation := entity.GetTransformation()
 	var objectColorLocation = gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))
 	var objectTransformationLocation = gl.GetUniformLocation(shaderProgram, gl.Str("transform\x00"))
