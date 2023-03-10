@@ -68,7 +68,7 @@ func (entity *GameEntity) UpdatePosition(maxX, maxY int) {
 // The static refers to the entity which we consider immovable for the purpose of
 // the collision, even if it is capabale of moving
 // For example, in a paddle-ball collision, consider the paddle static
-func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity) {
+func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity, collisionCallBack func(*GameEntity)) {
 	nextX := dynamicEntity.position[0] + dynamicEntity.flags.xVelScalar*dynamicEntity.velocity[0]
 	nextY := dynamicEntity.position[1] + dynamicEntity.flags.yVelScalar*dynamicEntity.velocity[1]
 
@@ -88,14 +88,15 @@ func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity) {
 		// Check collision from above -> reflect y velocity
 		if currentDynamicBottomEdge > staticTopEdge || currentDynamicTopEdge < staticBottomEdge {
 			dynamicEntity.flags.yVelScalar *= -1
+			collisionCallBack(staticEntity)
 		}
 		// Check collision from right -> reflect x
 		// Check collision from left -> reflect x velocity
 		if currentDynamicRightEdge < currentDynamicLeftEdge || currentDynamicLeftEdge > currentDynamicRightEdge {
 			dynamicEntity.flags.xVelScalar *= -1
+			collisionCallBack(staticEntity)
 		}
 	}
-
 }
 
 // Takes a set of four vertices describing the shape of a tetrahedral game object,

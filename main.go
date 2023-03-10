@@ -23,7 +23,7 @@ var (
 	ball                  *GameEntity
 	ballInitialPosition   = [2]float32{0, -.55}
 	ballDimensions        = [2]float32{.025, .025}
-	ballInitialVelocity   = [2]float32{0, .01}
+	ballInitialVelocity   = [2]float32{0.01, .01}
 	brickColor            = glm.Vec3{1.0, 1.0, 1.0}
 	paddleColor           = glm.Vec3{1.0, 1.0, 1.0}
 	vertexShaderSource    = `
@@ -237,11 +237,12 @@ func main() {
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		// Call draw function on game entities
-		// for _, brick := range bricks {
-		// 	drawEntity(brick, shaderProgram)
-		// 	checkEntityCollision(brick, ball)
-		// }
-		checkEntityCollision(paddle, ball)
+		for _, brick := range bricks {
+			drawEntity(brick, shaderProgram)
+			checkEntityCollision(brick, ball, removeBrickAndUpdateScore)
+
+		}
+		checkEntityCollision(paddle, ball, func(ge *GameEntity) {})
 		paddle.UpdatePosition(width, height)
 		ball.UpdatePosition(width, height)
 		drawEntity(paddle, shaderProgram)
@@ -298,4 +299,8 @@ func prepareBricks() []*GameEntity {
 		}
 	}
 	return bricks
+}
+
+func removeBrickAndUpdateScore(entity *GameEntity) {
+	fmt.Println("Do something here")
 }
