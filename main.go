@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"time"
 	"unsafe"
 
 	"github.com/engoengine/glm"
@@ -19,11 +20,11 @@ var (
 	paddle                *GameEntity
 	paddleDimensions      = [2]float32{.3, .05}
 	paddleInitialPosition = [2]float32{0, -.75}
-	paddleVelocity        = [2]float32{.015, 0}
+	paddleVelocity        = [2]float32{.025, 0}
 	ball                  *GameEntity
 	ballInitialPosition   = [2]float32{0, -.55}
 	ballDimensions        = [2]float32{.025, .025}
-	ballInitialVelocity   = [2]float32{0.01, .01}
+	ballInitialVelocity   = [2]float32{0.02, .02}
 	brickColor            = glm.Vec3{1.0, 1.0, 1.0}
 	paddleColor           = glm.Vec3{1.0, 1.0, 1.0}
 	vertexShaderSource    = `
@@ -192,7 +193,7 @@ func main() {
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	window, err := glfw.CreateWindow(width, height, "Brick", nil, nil)
+	window, err := glfw.CreateWindow(width, height, "brickbreaker by nat :)", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -244,10 +245,11 @@ func main() {
 			}
 		}
 		checkEntityCollision(paddle, ball, func(ge *GameEntity) {})
-		paddle.UpdatePosition(width, height)
 		ball.UpdatePosition(width, height)
+		paddle.UpdatePosition(width, height)
 		drawEntity(paddle, shaderProgram)
 		drawEntity(ball, shaderProgram)
+		time.Sleep(16 * time.Millisecond)
 		// end of draw loop
 		// swap in the rendered buffer
 		window.SwapBuffers()
