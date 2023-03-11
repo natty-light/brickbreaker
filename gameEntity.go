@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math"
+
 	"github.com/engoengine/glm"
 	"github.com/go-gl/gl/v2.1/gl"
 )
@@ -88,18 +90,24 @@ func checkEntityCollision(staticEntity *GameEntity, dynamicEntity *GameEntity, c
 		// Check collision from below -> reflect y velocity
 		// Check collision from above -> reflect y velocity
 		if currentDynamicBottomEdge >= staticTopEdge || currentDynamicTopEdge <= staticBottomEdge {
+			if dynamicEntity.flags.whoami == 1 && staticEntity.flags.whoami == 0 {
+				var sign float32 = -1
+				if dynamicEntity.position[0]-staticEntity.position[0] >= 0 {
+					sign = 1
+				}
+				t := math.Abs(float64(dynamicEntity.position[0]-staticEntity.position[0])) / float64(staticEntity.dimensions[0]/2.0)
+				dynamicEntity.flags.xVelScalar = float32(t)
+				dynamicEntity.flags.xVelScalar *= sign
+			}
+
 			dynamicEntity.flags.yVelScalar *= -1
-			collisionCallBack(staticEntity)
 		}
 		// Check collision from right -> reflect x
 		// Check collision from left -> reflect x velocity
 		if currentDynamicRightEdge <= staticLeftEdge || currentDynamicLeftEdge >= staticRightEdge {
-			// if dynamicEntity.flags.whoami == 1 && staticEntity.flags.whoami == 0 {
-			// 	dynamicEntity.velocity[0] = ((dynamicEntity.position[0] - staticEntity.position[0]) / staticEntity.dimensions[0]) - 0.5
-			// }
 			dynamicEntity.flags.xVelScalar *= -1
-			collisionCallBack(staticEntity)
 		}
+		collisionCallBack(staticEntity)
 	}
 }
 
